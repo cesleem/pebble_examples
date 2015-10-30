@@ -1,9 +1,11 @@
 {
     "appKeys": {
-        "dummy": 0
+      "KEY_TEMPERATURE": 0,
+      "KEY_CONDITIONS": 1
     },
     "capabilities": [
-        "configurable"
+        "configurable", 
+        "location"
     ],
     "companyName": "Pebble",
     "longName": "Scroll Layer Content Indicator",

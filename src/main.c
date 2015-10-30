@@ -1,8 +1,14 @@
 #include <pebble.h>
+
+#define KEY_TEMPERATURE 0
+#define KEY_CONDITIONS 1
   
 static Window *s_window;
 static TextLayer *s_content_layer;
-static char s_content[] = "Cupcake\n\nDonut\n\nEclair\n\nFroyo\n\nGingerbread\n\nHoneycomb\n\nIce Cream Sandwich\n\nJelly Bean\n\nKitKat\n\nLollipop\n\nMarshmallow\n\n";
+
+// Store incoming information
+static char temperature_buffer[8];
+static char conditions_buffer[32];
 
 static DictationSession *s_dictation_session;
 // Declare a buffer for the DictationSession
@@ -10,18 +16,59 @@ static char s_last_text[512];
 DictationSessionStatus status;
 char *transcription;
 
+static void inbox_received_callback(DictionaryIterator *iterator, void *context) {
+
+
+  // Read first item
+  Tuple *t = dict_read_first(iterator);
+
+  // For all items
+  while(t != NULL) {
+    // Which key was received?
+    switch(t->key) {
+    case KEY_TEMPERATURE:
+      snprintf(temperathahaure_buffer, sizeof(temperature_buffer), "%dC", (int)t->value->int32);
+      break;
+    case KEY_CONDITIONS:
+      snprintf(conditions_buffer, sizeof(conditions_buffer), "%s", t->value->cstring);
+      break;
+    default:
+      APP_LOG(APP_LOG_LEVEL_ERROR, "Key %d not recognized!", (int)t->key);
+      break;
+    }
+
+    // Look for next item
+    t = dict_read_next(iterator);
+  }
+}
+
+
+static void inbox_dropped_callback(AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Message dropped!");
+}
+
+static void outbox_failed_callback(DictionaryIterator *iterator, AppMessageResult reason, void *context) {
+  APP_LOG(APP_LOG_LEVEL_ERROR, "Outbox send failed!");
+}
+
+static void outbox_sent_callback(DictionaryIterator *iterator, void *context) {
+  APP_LOG(APP_LOG_LEVEL_INFO, "Outbox send success!");
+}
+
+
 static void dictation_session_callback(DictationSession *session, DictationSessionStatus status, 
               char *transcription, void *context) {
   // Print the results of a transcription attempt                                     
   APP_LOG(APP_LOG_LEVEL_INFO, "Dictation status: %d", (int)status);  
   if (status == DictationSessionStatusSuccess) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Transcription: %s", transcription);
-    snprintf(s_last_text, sizeof(s_last_text), "Transcription:\n\n%s", transcription);
+    snprintf(s_last_text, sizeof(s_last_text), "Transcription:\n\n%s, %s, %s", transcription, temperature_buffer, conditions_buffer);
     text_layer_set_text(s_content_layer, s_last_text);
   }
 }
 
 static void window_load(Window *window) {
+
   Layer *window_layer = window_get_root_layer(window);
   GRect bounds = layer_get_bounds(window_layer);
   
@@ -39,27 +86,16 @@ static void window_load(Window *window) {
     APP_LOG(APP_LOG_LEVEL_INFO, "Couldn't start dictation");
   }
   
-//   if(status == DictationSessionStatusSuccess) {
-//     // Display the dictated text
-//     snprintf(s_last_text, sizeof(s_last_text), "Transcription:\n\n%s", transcription);
-//     text_layer_set_text(s_content_layer, s_last_text);
-//   } else {
-//     // Display the reason for any error
-//     static char s_failed_buff[128];
-//     snprintf(s_failed_buff, sizeof(s_failed_buff), "Transcription failed.\n\nReason:\n%d", 
-//              (int)status);
-//     text_layer_set_text(s_content_layer, s_failed_buff);  
-//   }
-  
   text_layer_set_text_alignment(s_content_layer, GTextAlignmentCenter);
   text_layer_set_font(s_content_layer, fonts_get_system_font(FONT_KEY_GOTHIC_18_BOLD));
   layer_add_child(window_layer, text_layer_get_layer(s_content_layer));
+  APP_LOG(APP_LOG_LEVEL_INFO, "Main window loaded.");
 }
+
 
 static void window_unload(Window *window) {
   text_layer_destroy(s_content_layer);
 }
-
 
 static void init() {
   s_window = window_create();
@@ -68,7 +104,15 @@ static void init() {
     .unload = window_unload,
   });
   window_stack_push(s_window, true);
+  // Register callbacks
+  app_message_register_inbox_received(inbox_received_callback);
+  app_message_register_inbox_dropped(inbox_dropped_callback);
+  app_message_register_outbox_failed(outbox_failed_callback);
+  app_message_register_outbox_sent(outbox_sent_callback);
+  // Open AppMessage
+  app_message_open(app_message_inbox_size_maximum(), app_message_outbox_size_maximum());
 }
+
 
 static void deinit() {
   window_destroy(s_window);
