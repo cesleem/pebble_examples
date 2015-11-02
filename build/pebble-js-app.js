@@ -1,3 +1,5 @@
+var myAPIKey = '10f26251ff12540d15cc4724cb05b6db';
+
 var xhrRequest = function (url, type, callback) {
   var xhr = new XMLHttpRequest();
   xhr.onload = function () {
@@ -8,27 +10,53 @@ var xhrRequest = function (url, type, callback) {
 };
 
 function locationSuccess(pos) {
-  // Construct URL
-  var url = "http://api.openweathermap.org/data/2.5/weather?lat=&lon=api.openweathermap.org/data/2.5/weather?zip=94040,us&APPID=10f26251ff12540d15cc4724cb05b6db";
+    // Construct URL
+  var url = "https://sheetsu.com/apis/410674ca";
+
   // Send request to OpenWeatherMap
   xhrRequest(url, 'GET', 
     function(responseText) {
       // responseText contains a JSON object with weather info
       var json = JSON.parse(responseText);
+  
+      console.log(json.result[0].ceslee);
+      // // Temperature in Kelvin requires adjustment
+      // var temperature = Math.round(json.main.temp - 273.15);
+      // console.log("Temperature is " + temperature);
 
-      // Temperature in Kelvin requires adjustment
-      var temperature = Math.round(json.main.temp - 273.15);
-      console.log("Temperature is " + temperature);
-
-      // Conditions
-      var conditions = json.weather[0].main;      
-      console.log("Conditions are " + conditions);
+      // // Conditions
+      // var conditions = json.weather[0].main;      
+      // console.log("Conditions are " + conditions);
       
-      // Assemble dictionary using our keys
-      var dictionary = {
-        "KEY_TEMPERATURE": temperature,
-        "KEY_CONDITIONS": conditions
-      };
+      // // Assemble dictionary using our keys
+      // var dictionary = {
+      //   "KEY_TEMPERATURE": temperature,
+      //   "KEY_CONDITIONS": conditions
+      // };
+  // Construct URL
+  // var url = "http://api.openweathermap.org/data/2.5/weather?lat=" +
+  //     pos.coords.latitude + "&lon=" + pos.coords.longitude + '&appid=' + myAPIKey;
+
+  // Send request to OpenWeatherMap
+  // xhrRequest(url, 'GET', 
+  //   function(responseText) {
+  //     // responseText contains a JSON object with weather info
+  //     var json = JSON.parse(responseText);
+  
+  //     console.log(json);
+  //     // Temperature in Kelvin requires adjustment
+  //     var temperature = Math.round(json.main.temp - 273.15);
+  //     console.log("Temperature is " + temperature);
+
+  //     // Conditions
+  //     var conditions = json.weather[0].main;      
+  //     console.log("Conditions are " + conditions);
+      
+  //     // Assemble dictionary using our keys
+  //     var dictionary = {
+  //       "KEY_TEMPERATURE": temperature,
+  //       "KEY_CONDITIONS": conditions
+  //     };
 
       // Send to Pebble
       Pebble.sendAppMessage(dictionary,
@@ -58,7 +86,7 @@ function getWeather() {
 // Listen for when the watchface is opened
 Pebble.addEventListener('ready', 
   function(e) {
-    console.log("PebbleKit JS ready!");
+    console.log("PebbleKit JS ready Ceslee you GO GIRL!");
 
     // Get the initial weather
     getWeather();
